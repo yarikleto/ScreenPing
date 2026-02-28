@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Notification, Menu } = require('electron');
 const path = require('path');
 const config = require('./config');
 const { Monitor } = require('./monitor');
@@ -20,19 +20,21 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
+  mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 }
 
 async function openOverlay() {
   const { screen, desktopCapturer } = require('electron');
   const display = screen.getPrimaryDisplay();
-  const scaleFactor = display.scaleFactor || 1;
-  const physWidth = Math.round(display.size.width * scaleFactor);
-  const physHeight = Math.round(display.size.height * scaleFactor);
+  const sf = display.scaleFactor || 1;
+  const physW = Math.round(display.size.width * sf);
+  const physH = Math.round(display.size.height * sf);
 
+  // Capture at physical resolution — the real screen pixels
   const sources = await desktopCapturer.getSources({
     types: ['screen'],
-    thumbnailSize: { width: physWidth, height: physHeight },
+    thumbnailSize: { width: physW, height: physH },
   });
   const screenshotDataUrl = sources[0].thumbnail.toDataURL();
 
