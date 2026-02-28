@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>TML Queue Monitor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 20px; background: #1a1a2e; color: #eee; }
+    h1 { font-size: 18px; margin-bottom: 16px; color: #e94560; }
+    .section { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; margin-bottom: 4px; color: #aaa; }
+    input { width: 100%; padding: 8px; border: 1px solid #333; border-radius: 4px; background: #16213e; color: #eee; font-size: 14px; }
+    input:focus { outline: none; border-color: #e94560; }
+    button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    .btn-primary { background: #e94560; color: white; }
+    .btn-primary:hover { background: #c73652; }
+    .btn-secondary { background: #16213e; color: #eee; border: 1px solid #333; }
+    .btn-secondary:hover { background: #1a1a2e; }
+    .btn-stop { background: #ff6b35; color: white; }
+    .btn-stop:hover { background: #e55a2b; }
+    .region-info { font-size: 13px; color: #0f3460; background: #e2e2e2; padding: 8px; border-radius: 4px; margin-top: 8px; }
+    .status { font-size: 13px; padding: 8px; background: #16213e; border-radius: 4px; border: 1px solid #333; min-height: 60px; }
+    .status .line { margin-bottom: 4px; }
+    .log { font-size: 12px; font-family: monospace; padding: 8px; background: #0f3460; border-radius: 4px; max-height: 120px; overflow-y: auto; margin-top: 8px; }
+    .log .entry { margin-bottom: 2px; color: #aaa; }
+    .log .entry.alert { color: #e94560; font-weight: bold; }
+    .buttons { display: flex; gap: 8px; margin-top: 12px; }
+    .hidden { display: none; }
+    .row { display: flex; gap: 12px; }
+    .row > .section { flex: 1; }
+    .help { font-size: 11px; color: #666; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>TML Queue Monitor</h1>
+
+  <div class="section">
+    <label>Telegram Bot Token</label>
+    <input id="token" type="text" placeholder="123456:ABC-DEF...">
+    <div class="help">Create bot via @BotFather in Telegram, copy the token</div>
+  </div>
+
+  <div class="section">
+    <label>Telegram Chat ID</label>
+    <input id="chatId" type="text" placeholder="-1001234567890">
+    <div class="help">Send /start to your bot, then visit api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</div>
+  </div>
+
+  <div class="row">
+    <div class="section">
+      <label>Interval (sec)</label>
+      <input id="interval" type="number" value="10" min="1" max="300">
+    </div>
+    <div class="section">
+      <label>Threshold (%)</label>
+      <input id="threshold" type="number" value="15" min="1" max="100">
+    </div>
+  </div>
+
+  <div class="section">
+    <button id="btnRegion" class="btn-secondary">Select Region</button>
+    <div id="regionInfo" class="region-info hidden"></div>
+  </div>
+
+  <div class="buttons">
+    <button id="btnStart" class="btn-primary">Start Monitoring</button>
+    <button id="btnStop" class="btn-stop hidden">Stop Monitoring</button>
+  </div>
+
+  <div class="section" style="margin-top: 16px;">
+    <label>Status</label>
+    <div id="status" class="status">
+      <div class="line">Idle</div>
+    </div>
+    <div id="log" class="log"></div>
+  </div>
+
+  <div class="help" style="margin-top: 12px;">Ctrl+Shift+Space to toggle monitoring globally</div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
