@@ -5,7 +5,7 @@ const store = new Store({
     telegramBotToken: '',
     telegramChatId: '',
     intervalSeconds: 10,
-    thresholdPercent: 15,
+    thresholdPercent: 1,
     region: null,
   },
 });

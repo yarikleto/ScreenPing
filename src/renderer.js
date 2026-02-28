@@ -83,7 +83,7 @@ function saveFields() {
     telegramBotToken: $('token').value,
     telegramChatId: $('chatId').value,
     intervalSeconds: parseInt($('interval').value, 10) || 10,
-    thresholdPercent: parseInt($('threshold').value, 10) || 15,
+    thresholdPercent: parseInt($('threshold').value, 10) || 1,
   });
 }
 

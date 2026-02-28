@@ -2,9 +2,9 @@ const { desktopCapturer, screen } = require('electron');
 
 async function captureScreen() {
   const display = screen.getPrimaryDisplay();
-  const scaleFactor = display.scaleFactor || 1;
-  const width = Math.round(display.size.width * scaleFactor);
-  const height = Math.round(display.size.height * scaleFactor);
+  const sf = display.scaleFactor || 1;
+  const width = Math.round(display.size.width * sf);
+  const height = Math.round(display.size.height * sf);
   const sources = await desktopCapturer.getSources({
     types: ['screen'],
     thumbnailSize: { width, height },
@@ -20,7 +20,6 @@ function cropRegion(nativeImage, region) {
 function toRGBA(nativeImage) {
   const bitmap = nativeImage.toBitmap();
   const size = nativeImage.getSize();
-  // Electron bitmap is BGRA, convert to RGBA
   const rgba = Buffer.alloc(bitmap.length);
   for (let i = 0; i < bitmap.length; i += 4) {
     rgba[i] = bitmap[i + 2];     // R <- B
