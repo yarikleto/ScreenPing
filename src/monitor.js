@@ -53,6 +53,7 @@ class Monitor {
 
       const diffPercent = computeDiff(this.prevImage.data, data, width, height);
       const triggered = diffPercent > this.threshold;
+      let notified = false;
 
       if (triggered) {
         try {
@@ -62,6 +63,7 @@ class Monitor {
             pngBuffer,
             `Screen changed! Diff: ${diffPercent.toFixed(1)}%`
           );
+          notified = true;
         } catch (err) {
           console.error('Telegram send failed:', err.message);
         }
@@ -71,6 +73,7 @@ class Monitor {
         lastCheck: new Date().toLocaleTimeString(),
         diffPercent,
         triggered,
+        notified,
       });
 
       this.prevImage = { data, width, height };

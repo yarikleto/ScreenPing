@@ -1,18 +1,30 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
+let bgImage = null;
+let startX, startY, dragging = false;
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let startX, startY, dragging = false;
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  if (bgImage) drawBg();
+}
 
-function draw(x, y, w, h) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Dim everything
+window.addEventListener('resize', resizeCanvas);
+
+function drawBg() {
+  ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  // Clear selected region
-  ctx.clearRect(x, y, w, h);
+}
+
+function draw(x, y, w, h) {
+  drawBg();
+  // Show original screenshot in selected region
+  ctx.drawImage(bgImage, x, y, w, h, x, y, w, h);
   // Border
   ctx.strokeStyle = '#e94560';
   ctx.lineWidth = 2;
@@ -20,8 +32,18 @@ function draw(x, y, w, h) {
   // Size label
   ctx.fillStyle = 'white';
   ctx.font = '14px sans-serif';
-  ctx.fillText(`${Math.abs(w)} x ${Math.abs(h)}`, x + 4, y - 6);
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = 4;
+  const labelY = y < 20 ? y + h + 16 : y - 6;
+  ctx.fillText(`${w} x ${h}`, x + 4, labelY);
+  ctx.shadowBlur = 0;
 }
+
+window.overlayApi.onScreenshot((dataUrl) => {
+  bgImage = new Image();
+  bgImage.onload = () => resizeCanvas();
+  bgImage.src = dataUrl;
+});
 
 canvas.addEventListener('mousedown', (e) => {
   startX = e.clientX;

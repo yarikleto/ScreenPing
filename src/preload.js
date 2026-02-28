@@ -7,9 +7,11 @@ contextBridge.exposeInMainWorld('api', {
   getConfig: () => ipcRenderer.invoke('get-config'),
   saveConfig: (cfg) => ipcRenderer.invoke('save-config', cfg),
   onStatusUpdate: (cb) => {
+    ipcRenderer.removeAllListeners('status-update');
     ipcRenderer.on('status-update', (_e, data) => cb(data));
   },
   onMonitoringStopped: (cb) => {
+    ipcRenderer.removeAllListeners('monitoring-stopped');
     ipcRenderer.on('monitoring-stopped', (_e) => cb());
   },
 });

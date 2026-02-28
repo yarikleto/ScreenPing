@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>TML Queue Monitor</title>
+  <title>ScreenPing</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 20px; background: #1a1a2e; color: #eee; }
@@ -29,21 +29,47 @@
     .row { display: flex; gap: 12px; }
     .row > .section { flex: 1; }
     .help { font-size: 11px; color: #666; margin-top: 4px; }
+    .help a { color: #e94560; text-decoration: none; }
+    .help a:hover { text-decoration: underline; }
+    .help-box { font-size: 12px; color: #aaa; background: #16213e; border: 1px solid #333; border-radius: 4px; padding: 10px; margin-bottom: 16px; line-height: 1.6; }
+    .help-box summary { cursor: pointer; color: #e94560; font-weight: 600; font-size: 13px; }
+    .help-box ol { margin: 8px 0 0 18px; }
+    .help-box code { background: #0f3460; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+    .help-box a { color: #5dade2; text-decoration: none; }
+    .help-box a:hover { text-decoration: underline; color: #85c1e9; }
   </style>
 </head>
 <body>
-  <h1>TML Queue Monitor</h1>
+  <h1>ScreenPing</h1>
+
+  <details class="help-box">
+    <summary>How to get Telegram Bot Token & Chat ID</summary>
+    <p style="margin-top: 8px;"><strong>Bot Token:</strong></p>
+    <ol>
+      <li>Open Telegram, find <a href="https://t.me/BotFather">@BotFather</a></li>
+      <li>Send <code>/newbot</code>, pick a name and username</li>
+      <li>BotFather replies with a token like <code>123456:ABC-DEF...</code> — copy it</li>
+    </ol>
+    <p style="margin-top: 8px;"><strong>Chat ID (where to send alerts):</strong></p>
+    <ol>
+      <li><strong>Personal chat:</strong> open your bot in Telegram, send <code>/start</code></li>
+      <li><strong>Group:</strong> add bot to the group, send any message there</li>
+      <li>Paste token above, then click <strong>"Fetch Chat ID"</strong> below</li>
+    </ol>
+  </details>
 
   <div class="section">
     <label>Telegram Bot Token</label>
     <input id="token" type="text" placeholder="123456:ABC-DEF...">
-    <div class="help">Create bot via @BotFather in Telegram, copy the token</div>
   </div>
 
   <div class="section">
     <label>Telegram Chat ID</label>
-    <input id="chatId" type="text" placeholder="-1001234567890">
-    <div class="help">Send /start to your bot, then visit api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</div>
+    <div style="display: flex; gap: 8px;">
+      <input id="chatId" type="text" placeholder="-1001234567890" style="flex: 1;">
+      <button id="btnFetchChatId" class="btn-secondary" style="white-space: nowrap; padding: 8px 12px; font-size: 12px;">Fetch Chat ID</button>
+    </div>
+    <div id="fetchStatus" class="help" style="margin-top: 4px;"></div>
   </div>
 
   <div class="row">

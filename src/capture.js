@@ -1,12 +1,16 @@
-const { desktopCapturer } = require('electron');
+const { desktopCapturer, screen } = require('electron');
 
 async function captureScreen() {
+  const display = screen.getPrimaryDisplay();
+  const scaleFactor = display.scaleFactor || 1;
+  const width = Math.round(display.size.width * scaleFactor);
+  const height = Math.round(display.size.height * scaleFactor);
   const sources = await desktopCapturer.getSources({
     types: ['screen'],
-    thumbnailSize: { width: 3840, height: 2160 },
+    thumbnailSize: { width, height },
   });
   if (sources.length === 0) throw new Error('No screen source found');
-  return sources[0].thumbnail; // NativeImage
+  return sources[0].thumbnail;
 }
 
 function cropRegion(nativeImage, region) {
