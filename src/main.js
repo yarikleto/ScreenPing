@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const config = require('./config');
 
 let mainWindow;
 
@@ -17,5 +18,10 @@ function createWindow() {
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+
+  ipcMain.handle('get-config', () => config.getAll());
+  ipcMain.handle('save-config', (_e, cfg) => config.save(cfg));
+});
 app.on('window-all-closed', () => app.quit());
