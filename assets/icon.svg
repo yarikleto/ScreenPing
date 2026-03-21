@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f3460"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded background -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- Monitor body -->
+  <rect x="22" y="24" width="84" height="58" rx="6" fill="#0f3460" stroke="#2a2a4a" stroke-width="2"/>
+
+  <!-- Screen inner -->
+  <rect x="28" y="30" width="72" height="46" rx="3" fill="url(#screen)"/>
+
+  <!-- Selection region (dashed rectangle) -->
+  <rect x="40" y="38" width="36" height="26" rx="2" fill="none" stroke="#e94560" stroke-width="2" stroke-dasharray="4 3" opacity="0.9"/>
+
+  <!-- Crosshair in selection -->
+  <line x1="58" y1="42" x2="58" y2="60" stroke="#e94560" stroke-width="1" opacity="0.5"/>
+  <line x1="44" y1="51" x2="72" y2="51" stroke="#e94560" stroke-width="1" opacity="0.5"/>
+
+  <!-- Monitor stand -->
+  <rect x="52" y="82" width="24" height="6" rx="1" fill="#2a2a4a"/>
+  <rect x="46" y="88" width="36" height="4" rx="2" fill="#2a2a4a"/>
+
+  <!-- Ping waves (top-right) -->
+  <path d="M88 32 Q96 28 96 20" fill="none" stroke="#e94560" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+  <path d="M90 28 Q96 24 96 14" fill="none" stroke="#e94560" stroke-width="2.5" stroke-linecap="round" opacity="0.75"/>
+  <path d="M92 24 Q96 20 96 8" fill="none" stroke="#e94560" stroke-width="2.5" stroke-linecap="round" opacity="1"/>
+
+  <!-- Notification dot -->
+  <circle cx="96" cy="20" r="6" fill="#e94560"/>
+  <circle cx="96" cy="20" r="3" fill="#ff7b94"/>
+
+  <!-- Subtle scan line effect -->
+  <line x1="28" y1="48" x2="100" y2="48" stroke="#e94560" stroke-width="0.5" opacity="0.15"/>
+</svg>

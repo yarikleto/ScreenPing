@@ -1,16 +1,25 @@
+<div align="center">
+
+<img src="assets/icon.svg" width="100" height="100" alt="ScreenPing icon"/>
+
 # ScreenPing
 
-Watch a screen region, get a Telegram ping when it changes. Perfect for ticket queues, deployment dashboards, or anything you don't want to stare at.
+**Watch a screen region. Get a Telegram ping when it changes.**
 
-<img width="336" height="416" alt="image" src="https://github.com/user-attachments/assets/72f5e78e-ea52-43ac-a388-1c2144ebbbe2" />
+Perfect for ticket queues, deployment dashboards, or anything you don't want to stare at.
 
+<img width="336" height="416" alt="ScreenPing UI" src="https://github.com/user-attachments/assets/72f5e78e-ea52-43ac-a388-1c2144ebbbe2" />
+
+</div>
+
+---
 
 ## How it works
 
-1. Select a screen region to watch
-2. App takes periodic screenshots of that region
-3. Compares each screenshot with the previous one (pixel diff)
-4. If the difference exceeds the threshold — sends a screenshot to Telegram
+1. **Select** a screen region to watch
+2. **Monitor** — the app takes periodic screenshots of that region
+3. **Compare** — each screenshot is diffed against the previous one (pixel-level)
+4. **Alert** — if the change exceeds your threshold, a screenshot is sent to Telegram
 
 ## Quick start
 
@@ -19,43 +28,35 @@ npm install
 npm start
 ```
 
-## Setup Telegram
+> Requires **Node.js 18+**
 
-1. Open [@BotFather](https://t.me/BotFather) in Telegram, send `/newbot`
+## Telegram setup
+
+1. Open [@BotFather](https://t.me/BotFather) in Telegram and send `/newbot`
 2. Copy the bot token
-3. Send `/start` to your new bot
-4. Paste the token into the app and click **Fetch Chat ID**
+3. Send `/start` to your new bot (so it can message you)
+4. Paste the token into ScreenPing and click **Fetch Chat ID**
+
+That's it — you'll now receive screenshots in Telegram whenever the watched region changes.
+
+## Global hotkey
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+Shift+Space` | Toggle monitoring on/off |
+
+Works even when ScreenPing is in the background.
 
 ## Building
 
-Requires Node.js 18+.
+Each platform must be built on that platform — Electron does not support cross-compilation.
 
-### Windows (on Windows)
+| Platform | Command | Output |
+|---|---|---|
+| Windows | `npm run build` | `dist/ScreenPing 1.0.0.exe` (portable) |
+| macOS | `npm run build:mac` | `dist/ScreenPing-1.0.0.dmg` |
+| Linux | `npm run build:linux` | `dist/ScreenPing-1.0.0.AppImage` |
 
-```bash
-npm run build
-```
+## License
 
-Output: `dist/ScreenPing 1.0.0.exe` (portable, no install needed)
-
-### macOS (on macOS)
-
-```bash
-npm run build:mac
-```
-
-Output: `dist/ScreenPing-1.0.0.dmg`
-
-### Linux (on Linux)
-
-```bash
-npm run build:linux
-```
-
-Output: `dist/ScreenPing-1.0.0.AppImage`
-
-> **Note:** Each platform must be built on that platform (e.g. macOS builds require a Mac). Cross-compilation is not supported by Electron.
-
-## Hotkey
-
-**Ctrl+Shift+Space** — toggle monitoring on/off globally
+ISC
