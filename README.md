@@ -8,7 +8,7 @@
 
 Perfect for ticket queues, deployment dashboards, or anything you don't want to stare at.
 
-<img width="336" height="416" alt="ScreenPing UI" src="https://github.com/user-attachments/assets/72f5e78e-ea52-43ac-a388-1c2144ebbbe2" />
+<img width="384" alt="ScreenPing UI" src="assets/screenshot.png" />
 
 </div>
 
