@@ -102,15 +102,20 @@ app.whenReady().then(() => {
   ipcMain.handle('select-region', () => openOverlay());
 
   ipcMain.handle('start-monitoring', async () => {
-    const cfg = config.getAll();
-    if (!cfg.region) throw new Error('No region selected');
-    if (!cfg.telegramBotToken || !cfg.telegramChatId) throw new Error('Telegram not configured');
+    try {
+      const cfg = config.getAll();
+      if (!cfg.region) throw new Error('No region selected');
+      if (!cfg.telegramBotToken || !cfg.telegramChatId) throw new Error('Telegram not configured');
 
-    monitor = new Monitor({
-      ...cfg,
-      onStatus: createMonitorStatusHandler(),
-    });
-    await monitor.start();
+      monitor = new Monitor({
+        ...cfg,
+        onStatus: createMonitorStatusHandler(),
+      });
+      await monitor.start();
+    } catch (err) {
+      console.error('Failed to start monitoring:', err);
+      throw new Error('Internal Server Error');
+    }
   });
 
   ipcMain.handle('stop-monitoring', () => {

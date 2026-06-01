@@ -11,7 +11,8 @@ async function sendPhoto(token, chatId, pngBuffer, caption) {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Telegram API error: ${res.status} ${text}`);
+    console.error(`Telegram API error: ${res.status} ${text}`);
+    throw new Error('Internal Server Error');
   }
   return res.json();
 }
@@ -25,7 +26,8 @@ async function sendMessage(token, chatId, text) {
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Telegram API error: ${res.status} ${body}`);
+    console.error(`Telegram API error: ${res.status} ${body}`);
+    throw new Error('Internal Server Error');
   }
   return res.json();
 }
