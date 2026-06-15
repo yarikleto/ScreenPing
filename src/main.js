@@ -1,10 +1,12 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Notification, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Notification, screen } = require('electron');
 const path = require('path');
 const config = require('./config');
 const { Monitor } = require('./monitor');
+const { captureScreen } = require('./capture');
+const { getChatId } = require('./telegram');
 
 let monitor = null;
-let mainWindow;
+let mainWindow = null;
 let overlayWindow = null;
 let regionResolve = null;
 let isSelectingRegion = false;
@@ -25,18 +27,11 @@ function createWindow() {
 }
 
 async function openOverlay() {
-  const { screen, desktopCapturer } = require('electron');
   const display = screen.getPrimaryDisplay();
-  const sf = display.scaleFactor || 1;
-  const physW = Math.round(display.size.width * sf);
-  const physH = Math.round(display.size.height * sf);
 
   // Capture at physical resolution — the real screen pixels
-  const sources = await desktopCapturer.getSources({
-    types: ['screen'],
-    thumbnailSize: { width: physW, height: physH },
-  });
-  const screenshotDataUrl = sources[0].thumbnail.toDataURL();
+  const thumbnail = await captureScreen();
+  const screenshotDataUrl = thumbnail.toDataURL();
 
   isSelectingRegion = true;
   mainWindow.hide();
@@ -94,58 +89,61 @@ function createMonitorStatusHandler() {
   };
 }
 
+async function startMonitor() {
+  const cfg = config.getAll();
+  if (!cfg.region) throw new Error('No region selected');
+  if (!cfg.telegramBotToken || !cfg.telegramChatId) throw new Error('Telegram not configured');
+
+  monitor = new Monitor({
+    ...cfg,
+    onStatus: createMonitorStatusHandler(),
+  });
+  await monitor.start();
+}
+
+function stopMonitor() {
+  if (monitor) {
+    monitor.stop();
+    monitor = null;
+  }
+}
+
 app.whenReady().then(() => {
   createWindow();
 
   ipcMain.handle('get-config', () => config.getAll());
   ipcMain.handle('save-config', (_e, cfg) => config.save(cfg));
   ipcMain.handle('select-region', () => openOverlay());
+  ipcMain.handle('fetch-chat-id', (_e, token) => getChatId(token));
 
   ipcMain.handle('start-monitoring', async () => {
-    try {
-      const cfg = config.getAll();
-      if (!cfg.region) throw new Error('No region selected');
-      if (!cfg.telegramBotToken || !cfg.telegramChatId) throw new Error('Telegram not configured');
-
-      monitor = new Monitor({
-        ...cfg,
-        onStatus: createMonitorStatusHandler(),
-      });
-      await monitor.start();
-    } catch (err) {
-      console.error('Failed to start monitoring:', err);
-      throw new Error('Internal Server Error');
-    }
+    await startMonitor();
   });
 
   ipcMain.handle('stop-monitoring', () => {
-    if (monitor) {
-      monitor.stop();
-      monitor = null;
-    }
+    stopMonitor();
   });
 
-  globalShortcut.register('Ctrl+Shift+Space', () => {
+  const registered = globalShortcut.register('Ctrl+Shift+Space', () => {
     if (monitor && monitor.running) {
-      monitor.stop();
-      monitor = null;
+      stopMonitor();
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('monitoring-stopped');
       }
       new Notification({ title: 'ScreenPing', body: 'Monitoring stopped' }).show();
     } else {
-      const cfg = config.getAll();
-      if (!cfg.region || !cfg.telegramBotToken || !cfg.telegramChatId) return;
-      monitor = new Monitor({
-        ...cfg,
-        onStatus: createMonitorStatusHandler(),
-      });
-      monitor.start().catch((err) => {
-        console.error('Failed to start monitoring:', err);
-      });
-      new Notification({ title: 'ScreenPing', body: 'Monitoring started' }).show();
+      startMonitor()
+        .then(() => {
+          new Notification({ title: 'ScreenPing', body: 'Monitoring started' }).show();
+        })
+        .catch((err) => {
+          console.error('Failed to start monitoring:', err);
+        });
     }
   });
+  if (!registered) {
+    console.warn('Failed to register global shortcut Ctrl+Shift+Space (may be in use)');
+  }
 });
 
 app.on('window-all-closed', () => {
@@ -154,7 +152,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', () => {
-  if (monitor) { monitor.stop(); monitor = null; }
+  stopMonitor();
 });
 
 app.on('will-quit', () => {

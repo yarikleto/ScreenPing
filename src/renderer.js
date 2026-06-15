@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 
-let monitoring = false;
+const MAX_LOG_ENTRIES = 50;
 
 async function loadConfig() {
   const cfg = await window.api.getConfig();
@@ -26,11 +26,21 @@ function addLog(msg, isAlert = false) {
   const time = new Date().toLocaleTimeString();
   entry.textContent = `[${time}] ${msg}`;
   el.prepend(entry);
-  while (el.children.length > 50) el.removeChild(el.lastChild);
+  while (el.children.length > MAX_LOG_ENTRIES) el.removeChild(el.lastChild);
+}
+
+function setStatus(...lines) {
+  const el = $('status');
+  el.textContent = '';
+  for (const text of lines) {
+    const line = document.createElement('div');
+    line.className = 'line';
+    line.textContent = text;
+    el.appendChild(line);
+  }
 }
 
 function setMonitoring(active) {
-  monitoring = active;
   $('btnStart').classList.toggle('hidden', active);
   $('btnStop').classList.toggle('hidden', !active);
   $('token').disabled = active;
@@ -51,40 +61,27 @@ $('btnFetchChatId').addEventListener('click', async () => {
   status.textContent = 'Fetching...';
   status.style.color = '#aaa';
   try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates`);
-    const data = await res.json();
-    if (!data.ok) {
-      status.textContent = 'Invalid token or API error';
-      status.style.color = '#e94560';
-      return;
-    }
-    if (!data.result || data.result.length === 0) {
-      status.textContent = 'No messages found — send /start to your bot first, then try again';
-      status.style.color = '#ff6b35';
-      return;
-    }
-    const chatId = data.result[data.result.length - 1].message?.chat?.id;
-    if (chatId) {
-      $('chatId').value = chatId;
-      status.textContent = `Found chat ID: ${chatId}`;
-      status.style.color = '#2ecc71';
-    } else {
-      status.textContent = 'Could not find chat ID in response';
-      status.style.color = '#e94560';
-    }
+    const chatId = await window.api.fetchChatId(token);
+    $('chatId').value = chatId;
+    status.textContent = `Found chat ID: ${chatId}`;
+    status.style.color = '#2ecc71';
   } catch (err) {
-    status.textContent = 'Network error: ' + err.message;
+    status.textContent = err.message;
     status.style.color = '#e94560';
   }
 });
 
-function saveFields() {
-  window.api.saveConfig({
+function readFields() {
+  return {
     telegramBotToken: $('token').value,
     telegramChatId: $('chatId').value,
     intervalSeconds: parseInt($('interval').value, 10) || 10,
     thresholdPercent: parseInt($('threshold').value, 10) || 1,
-  });
+  };
+}
+
+function saveFields() {
+  window.api.saveConfig(readFields());
 }
 
 $('token').addEventListener('change', saveFields);
@@ -99,16 +96,11 @@ $('btnRegion').addEventListener('click', async () => {
 
 $('btnStart').addEventListener('click', async () => {
   try {
-    await window.api.saveConfig({
-      telegramBotToken: $('token').value,
-      telegramChatId: $('chatId').value,
-      intervalSeconds: parseInt($('interval').value, 10),
-      thresholdPercent: parseInt($('threshold').value, 10),
-    });
+    await window.api.saveConfig(readFields());
     await window.api.startMonitoring();
     setMonitoring(true);
     addLog('Monitoring started');
-    $('status').innerHTML = '<div class="line">Monitoring...</div>';
+    setStatus('Monitoring...');
   } catch (err) {
     addLog('Error: ' + err.message, true);
   }
@@ -118,14 +110,14 @@ $('btnStop').addEventListener('click', async () => {
   await window.api.stopMonitoring();
   setMonitoring(false);
   addLog('Monitoring stopped');
-  $('status').innerHTML = '<div class="line">Idle</div>';
+  setStatus('Idle');
 });
 
 window.api.onStatusUpdate((data) => {
-  $('status').innerHTML = `
-    <div class="line">Monitoring... Last check: ${data.lastCheck}</div>
-    <div class="line">Diff: ${data.diffPercent.toFixed(1)}%${data.triggered ? ' — TRIGGERED!' : ''}</div>
-  `;
+  setStatus(
+    `Monitoring... Last check: ${data.lastCheck}`,
+    `Diff: ${data.diffPercent.toFixed(1)}%${data.triggered ? ' — TRIGGERED!' : ''}`
+  );
   if (data.notified) {
     addLog(`Change detected! Diff: ${data.diffPercent.toFixed(1)}% — Telegram sent`, true);
   } else if (data.triggered) {
@@ -138,7 +130,7 @@ window.api.onStatusUpdate((data) => {
 window.api.onMonitoringStopped(() => {
   setMonitoring(false);
   addLog('Monitoring stopped (hotkey)');
-  $('status').innerHTML = '<div class="line">Idle</div>';
+  setStatus('Idle');
 });
 
 loadConfig();

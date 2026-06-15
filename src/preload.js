@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('api', {
   stopMonitoring: () => ipcRenderer.invoke('stop-monitoring'),
   getConfig: () => ipcRenderer.invoke('get-config'),
   saveConfig: (cfg) => ipcRenderer.invoke('save-config', cfg),
+  fetchChatId: (token) => ipcRenderer.invoke('fetch-chat-id', token),
   onStatusUpdate: (cb) => {
     ipcRenderer.removeAllListeners('status-update');
     ipcRenderer.on('status-update', (_e, data) => cb(data));

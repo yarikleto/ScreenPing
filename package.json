@@ -7,7 +7,10 @@
     "start": "electron .",
     "build": "electron-builder --win",
     "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux"
+    "build:linux": "electron-builder --linux",
+    "lint": "eslint src test",
+    "format": "prettier --write \"**/*.{js,json,html,md}\"",
+    "test": "node --test"
   },
   "build": {
     "appId": "com.screenping.app",
@@ -26,13 +29,26 @@
       "src/**/*"
     ]
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "electron",
+    "screenshot",
+    "monitoring",
+    "telegram",
+    "screen-capture",
+    "alerts"
+  ],
+  "author": "yarikleto",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "electron": "^40.8.5",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^26.8.1",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.0.0"
   },
   "dependencies": {
     "electron-store": "^8.2.0",

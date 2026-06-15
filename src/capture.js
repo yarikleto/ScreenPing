@@ -1,5 +1,7 @@
 const { desktopCapturer, screen } = require('electron');
 
+const BYTES_PER_PIXEL = 4; // RGBA
+
 async function captureScreen() {
   const display = screen.getPrimaryDisplay();
   const sf = display.scaleFactor || 1;
@@ -21,7 +23,7 @@ function toRGBA(nativeImage) {
   const bitmap = nativeImage.toBitmap();
   const size = nativeImage.getSize();
   const rgba = Buffer.alloc(bitmap.length);
-  for (let i = 0; i < bitmap.length; i += 4) {
+  for (let i = 0; i < bitmap.length; i += BYTES_PER_PIXEL) {
     rgba[i] = bitmap[i + 2];     // R <- B
     rgba[i + 1] = bitmap[i + 1]; // G
     rgba[i + 2] = bitmap[i];     // B <- R

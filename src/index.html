@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.telegram.org">
   <title>ScreenPing</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -37,6 +38,12 @@
     .help-box code { background: #0f3460; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
     .help-box a { color: #5dade2; text-decoration: none; }
     .help-box a:hover { text-decoration: underline; color: #85c1e9; }
+    .help-box p { margin-top: 8px; }
+    .input-row { display: flex; gap: 8px; }
+    .input-row > input { flex: 1; }
+    .btn-fetch { white-space: nowrap; padding: 8px 12px; font-size: 12px; }
+    .section-spaced { margin-top: 16px; }
+    .hotkey-hint { margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -44,13 +51,13 @@
 
   <details class="help-box">
     <summary>How to get Telegram Bot Token & Chat ID</summary>
-    <p style="margin-top: 8px;"><strong>Bot Token:</strong></p>
+    <p><strong>Bot Token:</strong></p>
     <ol>
       <li>Open Telegram, find <a href="https://t.me/BotFather">@BotFather</a></li>
       <li>Send <code>/newbot</code>, pick a name and username</li>
       <li>BotFather replies with a token like <code>123456:ABC-DEF...</code> — copy it</li>
     </ol>
-    <p style="margin-top: 8px;"><strong>Chat ID (where to send alerts):</strong></p>
+    <p><strong>Chat ID (where to send alerts):</strong></p>
     <ol>
       <li><strong>Personal chat:</strong> open your bot in Telegram, send <code>/start</code></li>
       <li><strong>Group:</strong> add bot to the group, send any message there</li>
@@ -65,11 +72,11 @@
 
   <div class="section">
     <label>Telegram Chat ID</label>
-    <div style="display: flex; gap: 8px;">
-      <input id="chatId" type="text" placeholder="-1001234567890" style="flex: 1;">
-      <button id="btnFetchChatId" class="btn-secondary" style="white-space: nowrap; padding: 8px 12px; font-size: 12px;">Fetch Chat ID</button>
+    <div class="input-row">
+      <input id="chatId" type="text" placeholder="-1001234567890">
+      <button id="btnFetchChatId" class="btn-secondary btn-fetch">Fetch Chat ID</button>
     </div>
-    <div id="fetchStatus" class="help" style="margin-top: 4px;"></div>
+    <div id="fetchStatus" class="help"></div>
   </div>
 
   <div class="row">
@@ -93,7 +100,7 @@
     <button id="btnStop" class="btn-stop hidden">Stop Monitoring</button>
   </div>
 
-  <div class="section" style="margin-top: 16px;">
+  <div class="section section-spaced">
     <label>Status</label>
     <div id="status" class="status">
       <div class="line">Idle</div>
@@ -101,7 +108,7 @@
     <div id="log" class="log"></div>
   </div>
 
-  <div class="help" style="margin-top: 12px;">Ctrl+Shift+Space to toggle monitoring globally</div>
+  <div class="help hotkey-hint">Ctrl+Shift+Space to toggle monitoring globally</div>
 
   <script src="renderer.js"></script>
 </body>

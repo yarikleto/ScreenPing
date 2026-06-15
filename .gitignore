@@ -3,3 +3,4 @@ dist/
 *.png
 !src/**/*.png
 !assets/**/*.png
+!build/icon.png

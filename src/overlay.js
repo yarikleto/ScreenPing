@@ -2,6 +2,8 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const dpr = window.devicePixelRatio || 1;
 
+const MIN_REGION_SIZE = 10; // ignore drags smaller than this (px)
+
 let bgImage = null;
 let startX, startY, dragging = false;
 
@@ -74,7 +76,7 @@ canvas.addEventListener('mouseup', (e) => {
   const y = Math.round(Math.min(startY, e.clientY) * dpr);
   const w = Math.round(Math.abs(e.clientX - startX) * dpr);
   const h = Math.round(Math.abs(e.clientY - startY) * dpr);
-  if (w > 10 && h > 10) {
+  if (w > MIN_REGION_SIZE && h > MIN_REGION_SIZE) {
     window.overlayApi.sendRegion({ x, y, width: w, height: h });
   }
 });

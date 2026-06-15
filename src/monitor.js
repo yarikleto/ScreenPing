@@ -5,8 +5,10 @@ const { sendPhoto } = require('./telegram');
 class Monitor {
   constructor({ region, intervalSeconds, thresholdPercent, telegramBotToken, telegramChatId, onStatus }) {
     this.region = region;
-    this.interval = intervalSeconds * 1000;
-    this.threshold = thresholdPercent;
+    this.interval = Math.max(1, Number(intervalSeconds) || 10) * 1000;
+    this.threshold = Number.isFinite(Number(thresholdPercent)) && Number(thresholdPercent) > 0
+      ? Number(thresholdPercent)
+      : 1;
     this.token = telegramBotToken;
     this.chatId = telegramChatId;
     this.onStatus = onStatus;
@@ -18,13 +20,21 @@ class Monitor {
   async start() {
     this.running = true;
     await this.tick();
-    this.timer = setInterval(() => this.tick(), this.interval);
+    this.scheduleNext();
+  }
+
+  scheduleNext() {
+    if (!this.running) return;
+    this.timer = setTimeout(async () => {
+      await this.tick();
+      this.scheduleNext();
+    }, this.interval);
   }
 
   stop() {
     this.running = false;
     if (this.timer) {
-      clearInterval(this.timer);
+      clearTimeout(this.timer);
       this.timer = null;
     }
     this.prevImage = null;
@@ -36,18 +46,17 @@ class Monitor {
       const screenshot = await captureScreen();
       const cropped = cropRegion(screenshot, this.region);
       const { data, width, height } = toRGBA(cropped);
-      const pngBuffer = cropped.toPNG();
 
       if (!this.prevImage) {
         this.prevImage = { data, width, height };
-        this.onStatus({ lastCheck: new Date().toLocaleTimeString(), diffPercent: 0, triggered: false });
+        this.onStatus({ lastCheck: new Date().toLocaleTimeString(), diffPercent: 0, triggered: false, notified: false });
         return;
       }
 
       // Handle size mismatch (e.g. resolution change)
       if (this.prevImage.width !== width || this.prevImage.height !== height) {
         this.prevImage = { data, width, height };
-        this.onStatus({ lastCheck: new Date().toLocaleTimeString(), diffPercent: 0, triggered: false });
+        this.onStatus({ lastCheck: new Date().toLocaleTimeString(), diffPercent: 0, triggered: false, notified: false });
         return;
       }
 
@@ -57,6 +66,7 @@ class Monitor {
 
       if (triggered) {
         try {
+          const pngBuffer = cropped.toPNG();
           await sendPhoto(
             this.token,
             this.chatId,

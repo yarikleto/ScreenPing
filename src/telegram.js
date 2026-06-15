@@ -12,24 +12,25 @@ async function sendPhoto(token, chatId, pngBuffer, caption) {
   if (!res.ok) {
     const text = await res.text();
     console.error(`Telegram API error: ${res.status} ${text}`);
-    throw new Error('Internal Server Error');
+    throw new Error(`Telegram API error: ${res.status} ${text}`);
   }
   return res.json();
 }
 
-async function sendMessage(token, chatId, text) {
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`Telegram API error: ${res.status} ${body}`);
-    throw new Error('Internal Server Error');
+async function getChatId(token) {
+  const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates`);
+  const data = await res.json();
+  if (!data.ok) {
+    throw new Error('Invalid token or Telegram API error');
   }
-  return res.json();
+  if (!data.result || data.result.length === 0) {
+    throw new Error('No messages found — send /start to your bot first, then try again');
+  }
+  const chatId = data.result[data.result.length - 1].message?.chat?.id;
+  if (!chatId) {
+    throw new Error('Could not find chat ID in response');
+  }
+  return chatId;
 }
 
-module.exports = { sendPhoto, sendMessage };
+module.exports = { sendPhoto, getChatId };
