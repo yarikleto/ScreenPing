@@ -1,7 +1,7 @@
 {
   "name": "screenping",
   "version": "1.0.0",
-  "description": "Watch a screen region, get a Telegram ping when it changes",
+  "description": "Watch any region of your screen and get an instant Telegram alert with a screenshot when it changes",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
@@ -38,7 +38,7 @@
     "alerts"
   ],
   "author": "yarikleto",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "engines": {
     "node": ">=18"
