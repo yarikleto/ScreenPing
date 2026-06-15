@@ -11,11 +11,22 @@ let overlayWindow = null;
 let regionResolve = null;
 let isSelectingRegion = false;
 
+const isMac = process.platform === 'darwin';
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 480,
-    height: 600,
+    height: 648,
     resizable: false,
+    show: false,
+    // macOS "glass" look: native vibrancy + inset traffic lights.
+    // All of these are mac-only and ignored/undefined elsewhere.
+    titleBarStyle: isMac ? 'hiddenInset' : 'default',
+    trafficLightPosition: isMac ? { x: 16, y: 14 } : undefined,
+    vibrancy: isMac ? 'under-window' : undefined,
+    visualEffectState: 'active',
+    // Transparent on mac so the vibrancy material shows through; solid base elsewhere.
+    backgroundColor: isMac ? '#00000000' : '#15152a',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -24,6 +35,8 @@ function createWindow() {
   });
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  // Avoid a white flash before the translucent UI is painted.
+  mainWindow.once('ready-to-show', () => mainWindow.show());
 }
 
 async function openOverlay() {
