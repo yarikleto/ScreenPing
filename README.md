@@ -10,7 +10,7 @@
 ![License](https://img.shields.io/badge/license-MIT-2ecc71)
 ![Built with Electron](https://img.shields.io/badge/built%20with-Electron-47848F?logo=electron&logoColor=white)
 
-<img width="440" alt="ScreenPing — watching a region, monitoring active, with a Telegram alert in the log" src="assets/screenshot.png" />
+<img width="536" alt="ScreenPing — watching a region, monitoring active, with a Telegram alert in the log" src="assets/screenshot.png" />
 
 </div>
 
