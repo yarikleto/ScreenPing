@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Watch any region of your screen and get an instant Telegram alert with a screenshot when it changes",
   "main": "src/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yarikleto/ScreenPing.git"
+  },
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win",
@@ -20,13 +24,26 @@
       "signAndEditExecutable": false
     },
     "mac": {
-      "target": "dmg"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64"]
+        }
+      ]
     },
     "linux": {
       "target": "AppImage"
     },
     "files": [
       "src/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "yarikleto",
+        "repo": "ScreenPing",
+        "releaseType": "release"
+      }
     ]
   },
   "keywords": [
