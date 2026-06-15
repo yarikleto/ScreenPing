@@ -35,6 +35,8 @@ const browserGlobals = {
   setTimeout: 'readonly',
   clearInterval: 'readonly',
   clearTimeout: 'readonly',
+  requestAnimationFrame: 'readonly',
+  ResizeObserver: 'readonly',
 };
 
 module.exports = [

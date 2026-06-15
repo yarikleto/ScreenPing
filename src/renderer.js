@@ -133,4 +133,32 @@ window.api.onMonitoringStopped(() => {
   setStatus('Idle');
 });
 
+// Keep the native window sized to its rendered content (macOS-style fit):
+// measure the real DOM and ask main to match it whenever the layout changes.
+function reportContentHeight() {
+  if (!window.api.resizeContent) return;
+  const titlebar = document.querySelector('.titlebar');
+  const inner = document.querySelector('.inner');
+  if (!inner) return;
+  const height =
+    (titlebar ? titlebar.offsetHeight : 0) + Math.ceil(inner.getBoundingClientRect().height);
+  window.api.resizeContent(height);
+}
+
+let resizePending = false;
+function scheduleResize() {
+  if (resizePending) return;
+  resizePending = true;
+  requestAnimationFrame(() => {
+    resizePending = false;
+    reportContentHeight();
+  });
+}
+
+const innerEl = document.querySelector('.inner');
+if (innerEl && 'ResizeObserver' in window) {
+  new ResizeObserver(scheduleResize).observe(innerEl);
+}
+window.addEventListener('load', scheduleResize);
+
 loadConfig();

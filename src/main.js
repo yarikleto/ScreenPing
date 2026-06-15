@@ -13,10 +13,22 @@ let isSelectingRegion = false;
 
 const isMac = process.platform === 'darwin';
 
+let mainWindowShown = false;
+
+// Reveal the main window exactly once. Called after the first content
+// measurement so the window opens already sized to its content (no resize jump).
+function showMainWindow() {
+  if (mainWindowShown || !mainWindow || mainWindow.isDestroyed()) return;
+  mainWindowShown = true;
+  mainWindow.show();
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 480,
-    height: 648,
+    // Close to the real content height; the renderer fine-tunes it on load via
+    // the 'resize-content' IPC so the window always hugs its content.
+    height: 760,
     resizable: false,
     show: false,
     // macOS "glass" look: native vibrancy + inset traffic lights.
@@ -35,8 +47,11 @@ function createWindow() {
   });
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
-  // Avoid a white flash before the translucent UI is painted.
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  // The renderer measures its content and triggers showMainWindow() via the
+  // 'resize-content' IPC. This fallback guarantees the window still appears if
+  // that measurement never arrives (and avoids a white flash before paint).
+  mainWindow.once('ready-to-show', () => setTimeout(showMainWindow, 700));
+  mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 async function openOverlay() {
@@ -128,6 +143,23 @@ app.whenReady().then(() => {
   ipcMain.handle('save-config', (_e, cfg) => config.save(cfg));
   ipcMain.handle('select-region', () => openOverlay());
   ipcMain.handle('fetch-chat-id', (_e, token) => getChatId(token));
+
+  // Keep the window height matched to its content (clamped to the screen).
+  // setContentSize can be ignored while resizable:false on some Electron
+  // versions, so briefly re-enable resizing around the call.
+  ipcMain.on('resize-content', (_e, height) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const maxHeight = screen.getPrimaryDisplay().workAreaSize.height - 40;
+    const target = Math.max(360, Math.min(Math.round(height) || 0, maxHeight));
+    const [width, current] = mainWindow.getContentSize();
+    if (current !== target) {
+      const wasResizable = mainWindow.isResizable();
+      if (!wasResizable) mainWindow.setResizable(true);
+      mainWindow.setContentSize(width, target);
+      if (!wasResizable) mainWindow.setResizable(false);
+    }
+    showMainWindow();
+  });
 
   ipcMain.handle('start-monitoring', async () => {
     await startMonitor();
