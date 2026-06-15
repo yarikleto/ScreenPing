@@ -1,44 +1,67 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1a1a2e"/>
-      <stop offset="100%" stop-color="#16213e"/>
+    <!-- App-tile background: deep purple/navy with a soft pink glow up top -->
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#2c2556"/>
+      <stop offset="52%" stop-color="#1a1736"/>
+      <stop offset="100%" stop-color="#100e22"/>
     </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="-6%" r="78%">
+      <stop offset="0%" stop-color="#e94560" stop-opacity="0.34"/>
+      <stop offset="62%" stop-color="#e94560" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Recessed screen -->
     <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0f3460"/>
-      <stop offset="100%" stop-color="#1a1a2e"/>
+      <stop offset="0%" stop-color="#2a2742"/>
+      <stop offset="100%" stop-color="#14121f"/>
     </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="40%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Accent (pink) for selection + ping -->
+    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff6b85"/>
+      <stop offset="100%" stop-color="#d6314f"/>
+    </linearGradient>
+
+    <!-- Depth: the monitor floats above the tile -->
+    <filter id="drop" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.42"/>
+    </filter>
+    <!-- The ping glows -->
+    <filter id="ping" x="-120%" y="-120%" width="340%" height="340%">
+      <feDropShadow dx="0" dy="0" stdDeviation="2.6" flood-color="#ff6b85" flood-opacity="0.95"/>
+    </filter>
   </defs>
 
-  <!-- Rounded background -->
-  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <!-- Rounded tile -->
+  <rect width="128" height="128" rx="30" fill="url(#bg)"/>
+  <rect width="128" height="128" rx="30" fill="url(#glow)"/>
+  <rect x="0.75" y="0.75" width="126.5" height="126.5" rx="29.25"
+        fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="1.5"/>
 
-  <!-- Monitor body -->
-  <rect x="22" y="24" width="84" height="58" rx="6" fill="#0f3460" stroke="#2a2a4a" stroke-width="2"/>
+  <!-- Monitor: screen + stand, floating with a soft shadow -->
+  <g filter="url(#drop)">
+    <rect x="58" y="80" width="12" height="9" rx="2" fill="#2b2746"/>
+    <rect x="46" y="88" width="36" height="6" rx="3" fill="#332e54"/>
+    <rect x="22" y="30" width="84" height="54" rx="11" fill="url(#screen)"
+          stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.5"/>
+    <rect x="22" y="30" width="84" height="54" rx="11" fill="url(#sheen)"/>
+  </g>
 
-  <!-- Screen inner -->
-  <rect x="28" y="30" width="72" height="46" rx="3" fill="url(#screen)"/>
+  <!-- Watched region: rounded dashed marquee (no crosshair) -->
+  <rect x="35" y="42" width="40" height="30" rx="6"
+        fill="#e94560" fill-opacity="0.10"
+        stroke="url(#accent)" stroke-width="2.6"
+        stroke-dasharray="5.5 4.5" stroke-linecap="round"/>
 
-  <!-- Selection region (dashed rectangle) -->
-  <rect x="40" y="38" width="36" height="26" rx="2" fill="none" stroke="#e94560" stroke-width="2" stroke-dasharray="4 3" opacity="0.9"/>
-
-  <!-- Crosshair in selection -->
-  <line x1="58" y1="42" x2="58" y2="60" stroke="#e94560" stroke-width="1" opacity="0.5"/>
-  <line x1="44" y1="51" x2="72" y2="51" stroke="#e94560" stroke-width="1" opacity="0.5"/>
-
-  <!-- Monitor stand -->
-  <rect x="52" y="82" width="24" height="6" rx="1" fill="#2a2a4a"/>
-  <rect x="46" y="88" width="36" height="4" rx="2" fill="#2a2a4a"/>
-
-  <!-- Ping waves (top-right) -->
-  <path d="M88 32 Q96 28 96 20" fill="none" stroke="#e94560" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
-  <path d="M90 28 Q96 24 96 14" fill="none" stroke="#e94560" stroke-width="2.5" stroke-linecap="round" opacity="0.75"/>
-  <path d="M92 24 Q96 20 96 8" fill="none" stroke="#e94560" stroke-width="2.5" stroke-linecap="round" opacity="1"/>
-
-  <!-- Notification dot -->
-  <circle cx="96" cy="20" r="6" fill="#e94560"/>
-  <circle cx="96" cy="20" r="3" fill="#ff7b94"/>
-
-  <!-- Subtle scan line effect -->
-  <line x1="28" y1="48" x2="100" y2="48" stroke="#e94560" stroke-width="0.5" opacity="0.15"/>
+  <!-- Ping: bright concentric arcs + solid dot, radiating into the top-right corner -->
+  <g fill="none" stroke="url(#accent)" stroke-linecap="round">
+    <path d="M 101 13 A 17 17 0 0 1 118 30" stroke-width="3.2" stroke-opacity="0.5"/>
+    <path d="M 101 20 A 10 10 0 0 1 111 30" stroke-width="3.6" stroke-opacity="0.88"/>
+  </g>
+  <circle cx="101" cy="30" r="5" fill="url(#accent)" filter="url(#ping)"/>
 </svg>
