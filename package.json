@@ -1,6 +1,6 @@
 {
   "name": "screenping",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Watch any region of your screen and get an instant Telegram alert with a screenshot when it changes",
   "main": "src/main.js",
   "repository": {
@@ -27,7 +27,9 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
