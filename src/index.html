@@ -77,15 +77,75 @@
 
     .content {
       flex: 1 1 auto;
-      overflow-y: auto;
-    }
-    /* .inner holds the real content and is measured to auto-size the window. */
-    .inner {
-      padding: 16px 18px 18px;
+      min-height: 0;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 13px;
     }
+    /* .inner fills the fixed-height window; the columns below flex to fill it.
+       The settings strip keeps its size, so expanding it shrinks the columns
+       rather than overflowing the fixed 16:9 box. */
+    .inner {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 14px 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Two-column landscape body. */
+    .columns {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      gap: 12px;
+    }
+    .col {
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    /* Region card fills the left column; its preview takes the leftover height
+       (object-fit keeps the aspect) so the Start button always sits below it. */
+    .region-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+    .region-card #regionInfo { flex: 1 1 auto; min-height: 0; }
+
+    /* Collapsible one-time setup strip. Fixed size so it never overflows the box. */
+    .settings-strip { flex: 0 0 auto; padding: 0; overflow: hidden; }
+    .settings-strip > summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      user-select: none;
+    }
+    .settings-strip > summary::-webkit-details-marker { display: none; }
+    .settings-strip > summary::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-right: 1.5px solid var(--text-dim);
+      border-bottom: 1.5px solid var(--text-dim);
+      transform: rotate(-45deg);
+      transition: transform 0.2s ease;
+    }
+    .settings-strip[open] > summary::before { transform: rotate(45deg); }
+    .settings-title { color: var(--text); }
+    .settings-state { font-size: 11.5px; font-weight: 500; color: var(--text-faint); }
+    .settings-body { padding: 0 16px 15px; }
+    .settings-body .help-box { margin-bottom: 14px; }
+
+    /* Status/log card fills the right column; the log grows to fill the rest. */
+    .status-card { display: flex; flex-direction: column; min-height: 0; }
+    .status-card .log { flex: 1 1 auto; height: auto; min-height: 90px; }
 
     .card {
       background: var(--glass);
@@ -180,14 +240,29 @@
     .btn-stop:active:not(:disabled) { transform: translateY(1px); }
 
     .region-info {
-      font-size: 12.5px;
-      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-      color: var(--accent-bright);
-      background: rgba(233, 69, 96, 0.12);
-      border: 1px solid rgba(233, 69, 96, 0.28);
-      padding: 8px 11px;
-      border-radius: var(--radius-sm);
       margin-top: 9px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 7px;
+    }
+
+    .region-preview {
+      display: block;
+      width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+      object-fit: contain;
+      object-position: left center;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    .region-caption {
+      font-size: 12px;
+      font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      color: var(--text-dim);
     }
 
     .status {
@@ -220,7 +295,7 @@
     .buttons { display: flex; gap: 10px; }
     .buttons > button { flex: 1; }
 
-    .hidden { display: none; }
+    .hidden { display: none !important; }
 
     /* Update-available banner (shown only when a newer release exists). */
     .update-banner {
@@ -346,69 +421,80 @@
       <button id="btnUpdate" class="btn-update">Update</button>
       <button id="btnDismissUpdate" class="btn-dismiss" title="Dismiss">&times;</button>
     </div>
-    <div class="card">
-      <details class="help-box">
-        <summary>How to get Telegram Bot Token &amp; Chat ID</summary>
-        <p><strong>Bot Token:</strong></p>
-        <ol>
-          <li>Open Telegram, find <a href="https://t.me/BotFather">@BotFather</a></li>
-          <li>Send <code>/newbot</code>, pick a name and username</li>
-          <li>BotFather replies with a token like <code>123456:ABC-DEF...</code> — copy it</li>
-        </ol>
-        <p><strong>Chat ID (where to send alerts):</strong></p>
-        <ol>
-          <li><strong>Personal chat:</strong> open your bot in Telegram, send <code>/start</code></li>
-          <li><strong>Group:</strong> add bot to the group, send any message there</li>
-          <li>Paste token above, then click <strong>"Fetch Chat ID"</strong> below</li>
-        </ol>
-      </details>
-    </div>
 
-    <div class="card">
-      <div class="section">
-        <label>Telegram Bot Token</label>
-        <input id="token" type="text" placeholder="123456:ABC-DEF...">
-      </div>
+    <!-- One-time setup; auto-collapses once a token + chat ID are saved. -->
+    <details id="settings" class="card settings-strip">
+      <summary>
+        <span class="settings-title">Telegram settings</span>
+        <span id="settingsState" class="settings-state"></span>
+      </summary>
+      <div class="settings-body">
+        <details class="help-box">
+          <summary>How to get Telegram Bot Token &amp; Chat ID</summary>
+          <p><strong>Bot Token:</strong></p>
+          <ol>
+            <li>Open Telegram, find <a href="https://t.me/BotFather">@BotFather</a></li>
+            <li>Send <code>/newbot</code>, pick a name and username</li>
+            <li>BotFather replies with a token like <code>123456:ABC-DEF...</code> — copy it</li>
+          </ol>
+          <p><strong>Chat ID (where to send alerts):</strong></p>
+          <ol>
+            <li><strong>Personal chat:</strong> open your bot in Telegram, send <code>/start</code></li>
+            <li><strong>Group:</strong> add bot to the group, send any message there</li>
+            <li>Paste token above, then click <strong>"Fetch Chat ID"</strong> below</li>
+          </ol>
+        </details>
 
-      <div class="section">
-        <label>Telegram Chat ID</label>
-        <div class="input-row">
-          <input id="chatId" type="text" placeholder="-1001234567890">
-          <button id="btnFetchChatId" class="btn-secondary btn-fetch">Fetch Chat ID</button>
-        </div>
-        <div id="fetchStatus" class="help"></div>
-      </div>
-
-      <div class="row">
-        <div class="section">
-          <label>Interval (sec)</label>
-          <input id="interval" type="number" value="10" min="1" max="300">
-        </div>
-        <div class="section">
-          <label>Threshold (%)</label>
-          <input id="threshold" type="number" value="1" min="1" max="100">
+        <div class="row">
+          <div class="section">
+            <label>Telegram Bot Token</label>
+            <input id="token" type="text" placeholder="123456:ABC-DEF...">
+          </div>
+          <div class="section">
+            <label>Telegram Chat ID</label>
+            <div class="input-row">
+              <input id="chatId" type="text" placeholder="-1001234567890">
+              <button id="btnFetchChatId" class="btn-secondary btn-fetch">Fetch Chat ID</button>
+            </div>
+            <div id="fetchStatus" class="help"></div>
+          </div>
         </div>
       </div>
+    </details>
 
-      <div class="section">
-        <label>Watched Region</label>
-        <button id="btnRegion" class="btn-secondary">Select Region</button>
-        <div id="regionInfo" class="region-info hidden"></div>
-      </div>
-    </div>
-
-    <div class="buttons">
-      <button id="btnStart" class="btn-primary">Start Monitoring</button>
-      <button id="btnStop" class="btn-stop hidden">Stop Monitoring</button>
-    </div>
-
-    <div class="card">
-      <div class="section section-spaced">
-        <label>Status</label>
-        <div id="status" class="status">
-          <div class="line">Idle</div>
+    <div class="columns">
+      <div class="col col-left">
+        <div class="card region-card">
+          <label>Watched Region</label>
+          <button id="btnRegion" class="btn-secondary">Select Region</button>
+          <div id="regionInfo" class="region-info hidden"></div>
         </div>
-        <div id="log" class="log"></div>
+        <div class="buttons">
+          <button id="btnStart" class="btn-primary">Start Monitoring</button>
+          <button id="btnStop" class="btn-stop hidden">Stop Monitoring</button>
+        </div>
+      </div>
+
+      <div class="col col-right">
+        <div class="card params-card">
+          <div class="row">
+            <div class="section">
+              <label>Interval (sec)</label>
+              <input id="interval" type="number" value="10" min="1" max="300">
+            </div>
+            <div class="section">
+              <label>Threshold (%)</label>
+              <input id="threshold" type="number" value="1" min="1" max="100">
+            </div>
+          </div>
+        </div>
+        <div class="card status-card">
+          <label>Status</label>
+          <div id="status" class="status">
+            <div class="line">Idle</div>
+          </div>
+          <div id="log" class="log"></div>
+        </div>
       </div>
     </div>
 

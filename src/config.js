@@ -7,6 +7,7 @@ const store = new Store({
     intervalSeconds: 10,
     thresholdPercent: 1,
     region: null,
+    regionPreview: null,
   },
 });
 
@@ -18,6 +19,7 @@ module.exports = {
       intervalSeconds: store.get('intervalSeconds'),
       thresholdPercent: store.get('thresholdPercent'),
       region: store.get('region'),
+      regionPreview: store.get('regionPreview'),
     };
   },
   save(cfg) {

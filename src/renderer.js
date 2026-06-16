@@ -9,13 +9,38 @@ async function loadConfig() {
   if (cfg.intervalSeconds) $('interval').value = cfg.intervalSeconds;
   if (cfg.thresholdPercent) $('threshold').value = cfg.thresholdPercent;
   if (cfg.region) {
-    showRegion(cfg.region);
+    showRegion(cfg.region, cfg.regionPreview);
   }
+  // Setup is a one-time chore: collapse it once credentials exist, expand it
+  // (so it's the first thing seen) when they don't.
+  const configured = !!(cfg.telegramBotToken && cfg.telegramChatId);
+  $('settings').open = !configured;
+  refreshSettingsState();
 }
 
-function showRegion(r) {
+function refreshSettingsState() {
+  const configured = $('token').value.trim() !== '' && $('chatId').value.trim() !== '';
+  $('settingsState').textContent = configured ? '· configured' : '· needs setup';
+}
+
+function showRegion(r, preview) {
   const el = $('regionInfo');
-  el.textContent = `Region: ${r.x}, ${r.y} — ${r.width}x${r.height}`;
+  el.textContent = '';
+
+  if (preview) {
+    const img = document.createElement('img');
+    img.className = 'region-preview';
+    img.src = preview;
+    img.alt = 'Selected region preview';
+    img.addEventListener('load', scheduleResize);
+    el.appendChild(img);
+  }
+
+  const caption = document.createElement('div');
+  caption.className = 'region-caption';
+  caption.textContent = `${r.width} × ${r.height} at ${r.x}, ${r.y}`;
+  el.appendChild(caption);
+
   el.classList.remove('hidden');
 }
 
@@ -63,6 +88,8 @@ $('btnFetchChatId').addEventListener('click', async () => {
   try {
     const chatId = await window.api.fetchChatId(token);
     $('chatId').value = chatId;
+    saveFields();
+    refreshSettingsState();
     status.textContent = `Found chat ID: ${chatId}`;
     status.style.color = '#2ecc71';
   } catch (err) {
@@ -84,14 +111,16 @@ function saveFields() {
   window.api.saveConfig(readFields());
 }
 
+$('token').addEventListener('input', refreshSettingsState);
+$('chatId').addEventListener('input', refreshSettingsState);
 $('token').addEventListener('change', saveFields);
 $('chatId').addEventListener('change', saveFields);
 $('interval').addEventListener('change', saveFields);
 $('threshold').addEventListener('change', saveFields);
 
 $('btnRegion').addEventListener('click', async () => {
-  const region = await window.api.selectRegion();
-  if (region) showRegion(region);
+  const result = await window.api.selectRegion();
+  if (result && result.region) showRegion(result.region, result.preview);
 });
 
 $('btnStart').addEventListener('click', async () => {

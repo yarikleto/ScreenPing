@@ -47,6 +47,24 @@ npm start
 
 > Requires **Node.js 18+**
 
+## macOS: "Apple could not verify ScreenPing"
+
+ScreenPing's downloads aren't signed with an Apple Developer ID, so on first
+launch macOS shows a warning like *"Apple could not verify ScreenPing is free
+of malware."* The app is fine — macOS just quarantines anything downloaded from
+an unidentified developer. To open it:
+
+1. Click **Done** on the warning (don't move it to Trash).
+2. Open **System Settings → Privacy & Security** and scroll down.
+3. Click **Open Anyway** next to the ScreenPing message, authenticate, then
+   launch ScreenPing again and confirm.
+
+Or remove the quarantine flag from Terminal in one command:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/ScreenPing.app
+```
+
 ## Telegram setup
 
 1. Open [@BotFather](https://t.me/BotFather) in Telegram and send `/newbot`
