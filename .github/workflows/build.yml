@@ -3,14 +3,9 @@ name: Build
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
     branches: [main]
   workflow_dispatch:
-
-# Needed for electron-builder to create GitHub Releases via GITHUB_TOKEN (tag builds only).
-permissions:
-  contents: write
 
 jobs:
   test:
@@ -27,7 +22,7 @@ jobs:
 
   build:
     needs: test
-    # PRs only run the test gate; full cross-platform builds run on push to main and tags.
+    # PRs only run the test gate; full cross-platform builds run on push to main.
     if: github.event_name != 'pull_request'
     strategy:
       fail-fast: false
@@ -47,11 +42,9 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      # On a v* tag: build AND publish a GitHub Release. On main/other: build only.
+      # Build installers only; releases are published separately via the `release` skill.
       - name: Build (${{ matrix.platform }})
-        run: npx electron-builder --${{ matrix.platform }} --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --${{ matrix.platform }} --publish never
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
