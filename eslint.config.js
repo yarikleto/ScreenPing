@@ -55,6 +55,7 @@ module.exports = [
       'src/config.js',
       'src/diff.js',
       'src/telegram.js',
+      'src/update-check.js',
       'src/preload.js',
       'src/overlay-preload.js',
       'test/**/*.js',

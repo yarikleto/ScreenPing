@@ -16,4 +16,9 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.removeAllListeners('monitoring-stopped');
     ipcRenderer.on('monitoring-stopped', (_e) => cb());
   },
+  onUpdateAvailable: (cb) => {
+    ipcRenderer.removeAllListeners('update-available');
+    ipcRenderer.on('update-available', (_e, data) => cb(data));
+  },
+  openReleasePage: () => ipcRenderer.send('open-release-page'),
 });
