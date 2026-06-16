@@ -1,0 +1,49 @@
+name: Release
+
+# Manual only — triggered by the `release` skill (gh workflow run), never automatic.
+# Builds the installers on each runner and publishes a GitHub Release directly from
+# the runner (no local artifact download needed). The release tag/name comes from
+# the version in package.json on the chosen ref (default: main).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version being released (must match package.json, e.g. 1.0.2). Used only as a safety check.'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Fail fast if the dispatched version doesn't match what's committed.
+      - name: Verify version matches package.json
+        shell: bash
+        run: |
+          pkg=$(node -p "require('./package.json').version")
+          if [ "$pkg" != "${{ inputs.version }}" ]; then
+            echo "package.json is $pkg but dispatch asked for ${{ inputs.version }}" >&2
+            exit 1
+          fi
+      - name: Build & publish (${{ matrix.platform }})
+        run: npx electron-builder --${{ matrix.platform }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

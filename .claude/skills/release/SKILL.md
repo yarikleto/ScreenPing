@@ -1,32 +1,35 @@
 ---
 name: release
-description: Publish a new ScreenPing GitHub Release. Use when the user asks to "release", "cut a release", "publish a release", "ship a version", or similar. CI builds the macOS/Linux/Windows installers on every merge to main but never publishes — this skill is the only path to a release. It bumps the version, waits for CI to build the installers, downloads them, and creates the GitHub Release with the dmg/AppImage/exe attached.
+description: Publish a new ScreenPing GitHub Release. Use when the user asks to "release", "cut a release", "publish a release", "ship a version", or similar. Releases are NOT automatic — this skill is the only path. It bumps the version, then triggers the manual Release workflow, which builds the macOS/Linux/Windows installers on the runners and publishes the GitHub Release directly (no local downloads).
 ---
 
 # Release ScreenPing
 
-CI (`.github/workflows/build.yml`) builds the three platform installers on every push to `main` and uploads them as workflow artifacts. It does **not** publish releases. This skill does, from those CI-built artifacts. Run it from the repo root.
+Two workflows exist:
+- `build.yml` — runs on every push to `main` / PR. Builds installers as artifacts. **Never publishes.**
+- `release.yml` — `workflow_dispatch` only. Builds installers on the runners and publishes the GitHub Release from the runner (`electron-builder --publish always`). This is what creates releases.
+
+This skill bumps the version, then dispatches `release.yml`. Publishing happens entirely on the runners — do **not** try to download artifacts and `gh release create` locally (artifact download is unreliable in this environment). Run from the repo root.
 
 ## Prerequisites
-- `gh auth status` succeeds and the working tree is clean.
-- Builds are unsigned — that's expected (users see Gatekeeper/SmartScreen warnings).
-- mac is **x64-only** by design (runs on Apple Silicon via Rosetta); see memory `mac-build-x64-only`. Do not "fix" this back to arm64.
+- `gh auth status` succeeds; working tree clean.
+- Builds are unsigned (Gatekeeper/SmartScreen warnings expected).
+- mac is **x64-only** by design (runs on Apple Silicon via Rosetta); see memory `mac-build-x64-only`. Don't change it to arm64 — ad-hoc signing breaks on newer macOS.
 
-## The skill is safe to re-run from any point. Always check current state before acting.
+## Safe to re-run from any point — always check current state first.
 
 ### 1. Decide the version
-- If the user named a version (e.g. "release 1.2.0"), use it. Otherwise read `version` from `package.json` and bump the patch.
-- Call it `X.Y.Z`; the tag is `vX.Y.Z`.
-- Abort if the release already exists: `gh release view vX.Y.Z` returning success means it's already published — stop and tell the user.
+- If the user named one (e.g. "release 1.2.0"), use it; else bump the patch of `package.json`'s `version`.
+- Call it `X.Y.Z`, tag `vX.Y.Z`.
+- If `gh release view vX.Y.Z` succeeds, it's already published — stop and tell the user.
 
-### 2. Bump the version (only if needed)
-Direct pushes to `main` are blocked, so the bump goes through a PR. **Skip this whole step if `main` already reports `X.Y.Z`** (i.e. a previous run merged the bump but failed later):
+### 2. Bump the version on main (skip if already there)
+Direct pushes to `main` are blocked, so go through a PR. **If `package.json` on `main` already reports `X.Y.Z`, skip this entire step** (a previous run merged it):
 
 ```bash
 git checkout main && git pull --ff-only
-# If package.json on main is already X.Y.Z, skip to step 3.
 git checkout -b release/vX.Y.Z
-npm version X.Y.Z --no-git-tag-version   # updates package.json + package-lock.json, no tag
+npm version X.Y.Z --no-git-tag-version
 git commit -am "Release vX.Y.Z"
 git push origin release/vX.Y.Z
 gh pr create --title "Release vX.Y.Z" --body "Version bump for release vX.Y.Z."
@@ -34,50 +37,25 @@ gh pr merge --squash --delete-branch
 git checkout main && git fetch origin main && git reset --hard origin/main
 ```
 
-### 3. Find the build run for the current main HEAD
-The merge (or the existing HEAD if you skipped step 2) is the commit to release.
+### 3. Dispatch the Release workflow
+It builds + publishes from the runners. `--ref main` so it uses the just-merged version:
 
 ```bash
-SHA=$(git rev-parse HEAD)
-# gh run list has no --commit flag; filter on headSha. Retry a few times — the run
-# takes a few seconds to register after the push.
-RID=$(gh run list --workflow build.yml --branch main --json databaseId,headSha,status \
-  -q "map(select(.headSha==\"$SHA\"))[0].databaseId")
+gh workflow run release.yml --ref main -f version=X.Y.Z
 ```
 
-If `RID` is empty, the build hasn't registered yet (wait and retry) — or this commit predates CI / its artifacts expired (30-day retention). In the latter case, push an empty commit or a new bump to get a fresh build.
-
-### 4. Wait for the build, then download installers
-```bash
-gh run watch "$RID" --exit-status      # FAILS -> stop, do NOT publish a partial release
-rm -rf /tmp/screenping-release
-gh run download "$RID" -D /tmp/screenping-release
-```
-This yields `screenping-mac/*.dmg`, `screenping-linux/*.AppImage`, `screenping-win/*.exe`.
-
-### 5. Verify all three installers exist before publishing
-A missing file would pass an unexpanded glob to `gh` and fail confusingly. Confirm first:
+### 4. Watch it to completion
+The run takes a few seconds to register:
 
 ```bash
-ls /tmp/screenping-release/screenping-mac/*.dmg \
-   /tmp/screenping-release/screenping-linux/*.AppImage \
-   /tmp/screenping-release/screenping-win/*.exe
+sleep 5
+RID=$(gh run list --workflow release.yml --json databaseId -q '.[0].databaseId')
+gh run watch "$RID" --exit-status
 ```
-If any is missing, stop and report which platform's build/upload failed.
+The three matrix jobs publish to the same release (this is fine — proven). If a job fails, stop and report; the release may be partial.
 
-### 6. Create the release
-Pin the tag to the exact commit you built with `--target`:
-
-```bash
-gh release create vX.Y.Z \
-  /tmp/screenping-release/screenping-mac/*.dmg \
-  /tmp/screenping-release/screenping-linux/*.AppImage \
-  /tmp/screenping-release/screenping-win/*.exe \
-  --target "$SHA" --title "vX.Y.Z" --generate-notes
-```
-
-### 7. Verify and report
+### 5. Verify and report
 ```bash
 gh release view vX.Y.Z --json isDraft,assets -q '"draft=\(.isDraft) assets=\([.assets[].name])"'
 ```
-Confirm `draft=false` and the three installers are listed, then give the user the release URL.
+Confirm `draft=false` and that the `.dmg`, `.AppImage`, and `.exe` are listed, then give the user the release URL.
