@@ -1,15 +1,18 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Notification, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Notification, screen, shell } = require('electron');
 const path = require('path');
 const config = require('./config');
 const { Monitor } = require('./monitor');
 const { captureScreen } = require('./capture');
 const { getChatId } = require('./telegram');
+const { checkForUpdate } = require('./update-check');
 
 let monitor = null;
 let mainWindow = null;
 let overlayWindow = null;
 let regionResolve = null;
 let isSelectingRegion = false;
+// Set when a newer release is found; the renderer's "Update" button opens it.
+let updateUrl = null;
 
 const isMac = process.platform === 'darwin';
 
@@ -52,7 +55,23 @@ function createWindow() {
   // that measurement never arrives (and avoids a white flash before paint).
   mainWindow.once('ready-to-show', () => setTimeout(showMainWindow, 700));
   mainWindow.on('closed', () => { mainWindow = null; });
+
+  // Once the renderer is ready, check GitHub for a newer release and, if there
+  // is one, tell the renderer to show its update banner. Best-effort and silent.
+  mainWindow.webContents.once('did-finish-load', () => {
+    checkForUpdate(app.getVersion()).then((update) => {
+      if (update && mainWindow && !mainWindow.isDestroyed()) {
+        updateUrl = update.url;
+        mainWindow.webContents.send('update-available', { version: update.version });
+      }
+    });
+  });
 }
+
+// Open the latest-release page in the user's browser (URL is set by the update check).
+ipcMain.on('open-release-page', () => {
+  if (updateUrl) shell.openExternal(updateUrl);
+});
 
 async function openOverlay() {
   const display = screen.getPrimaryDisplay();

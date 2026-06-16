@@ -133,6 +133,15 @@ window.api.onMonitoringStopped(() => {
   setStatus('Idle');
 });
 
+window.api.onUpdateAvailable((info) => {
+  $('updateText').textContent = `Version ${info.version} is available`;
+  $('updateBanner').classList.remove('hidden');
+});
+$('btnUpdate').addEventListener('click', () => window.api.openReleasePage());
+$('btnDismissUpdate').addEventListener('click', () => {
+  $('updateBanner').classList.add('hidden');
+});
+
 // Keep the native window sized to its rendered content (macOS-style fit):
 // measure the real DOM and ask main to match it whenever the layout changes.
 function reportContentHeight() {
