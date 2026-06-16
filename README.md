@@ -65,6 +65,18 @@ Or remove the quarantine flag from Terminal in one command:
 xattr -dr com.apple.quarantine /Applications/ScreenPing.app
 ```
 
+Prefer to skip this entirely? Build the app yourself — a locally built app
+isn't downloaded, so macOS never quarantines it and the warning never appears:
+
+```bash
+git clone https://github.com/yarikleto/ScreenPing.git
+cd ScreenPing
+npm install
+npm run build:mac   # produces dist/ScreenPing-<version>.dmg
+```
+
+See [Building](#building) for the other platforms.
+
 ## Telegram setup
 
 1. Open [@BotFather](https://t.me/BotFather) in Telegram and send `/newbot`
