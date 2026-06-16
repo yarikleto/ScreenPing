@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, Notification, screen, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, Notification, screen, shell, dialog } = require('electron');
 const path = require('path');
 const config = require('./config');
 const { Monitor } = require('./monitor');
@@ -73,11 +73,49 @@ ipcMain.on('open-release-page', () => {
   if (updateUrl) shell.openExternal(updateUrl);
 });
 
+// desktopCapturer.getSources() rejects with "Failed to get sources" when the app
+// lacks macOS Screen Recording permission. Surface that instead of failing silently.
+function notifyScreenCaptureBlocked(err) {
+  if (isMac) {
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type: 'warning',
+      title: 'Screen Recording permission needed',
+      message: 'ScreenPing can’t capture your screen.',
+      detail:
+        'Grant Screen Recording permission in System Settings → Privacy & Security → ' +
+        'Screen Recording, enable ScreenPing, then try selecting a region again. ' +
+        'You may need to quit and reopen ScreenPing after enabling it.',
+      buttons: ['Open System Settings', 'Cancel'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (choice === 0) {
+      shell.openExternal(
+        'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture'
+      );
+    }
+  } else {
+    dialog.showMessageBoxSync(mainWindow, {
+      type: 'warning',
+      title: 'Screen capture failed',
+      message: 'ScreenPing could not capture your screen.',
+      detail: err.message,
+      buttons: ['OK'],
+    });
+  }
+}
+
 async function openOverlay() {
   const display = screen.getPrimaryDisplay();
 
   // Capture at physical resolution — the real screen pixels
-  const thumbnail = await captureScreen();
+  let thumbnail;
+  try {
+    thumbnail = await captureScreen();
+  } catch (err) {
+    notifyScreenCaptureBlocked(err);
+    return null;
+  }
   const screenshotDataUrl = thumbnail.toDataURL();
 
   isSelectingRegion = true;
@@ -94,13 +132,29 @@ async function openOverlay() {
       frame: false,
       alwaysOnTop: true,
       skipTaskbar: true,
-      fullscreen: true,
+      // macOS native fullscreen insets the content area by the menu bar, so the
+      // window no longer matches the full-screen screenshot 1:1 (causing the
+      // overlay to look zoomed/shifted). Instead, on mac we cover the whole
+      // display with explicit bounds and float above the menu bar/Dock via the
+      // screen-saver window level (set below). Other platforms keep fullscreen.
+      fullscreen: !isMac,
+      enableLargerThanScreen: isMac,
       webPreferences: {
         preload: path.join(__dirname, 'overlay-preload.js'),
         contextIsolation: true,
         nodeIntegration: false,
       },
     });
+    if (isMac) {
+      overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+      overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      overlayWindow.setBounds({
+        x: display.bounds.x,
+        y: display.bounds.y,
+        width: display.bounds.width,
+        height: display.bounds.height,
+      });
+    }
     overlayWindow.loadFile(path.join(__dirname, 'overlay.html'));
     overlayWindow.webContents.on('did-finish-load', () => {
       overlayWindow.webContents.send('set-screenshot', screenshotDataUrl);

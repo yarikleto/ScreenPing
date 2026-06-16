@@ -71,11 +71,16 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('mouseup', (e) => {
   if (!dragging) return;
   dragging = false;
-  // Send physical pixel coordinates to match captureScreen resolution
-  const x = Math.round(Math.min(startX, e.clientX) * dpr);
-  const y = Math.round(Math.min(startY, e.clientY) * dpr);
-  const w = Math.round(Math.abs(e.clientX - startX) * dpr);
-  const h = Math.round(Math.abs(e.clientY - startY) * dpr);
+  if (!bgImage) return;
+  // Map CSS coords into the screenshot's actual pixel space. The captured
+  // thumbnail size can differ slightly from innerWidth*dpr (aspect-ratio
+  // rounding), so scale by the real image dimensions rather than assuming dpr.
+  const scaleX = bgImage.naturalWidth / window.innerWidth;
+  const scaleY = bgImage.naturalHeight / window.innerHeight;
+  const x = Math.round(Math.min(startX, e.clientX) * scaleX);
+  const y = Math.round(Math.min(startY, e.clientY) * scaleY);
+  const w = Math.round(Math.abs(e.clientX - startX) * scaleX);
+  const h = Math.round(Math.abs(e.clientY - startY) * scaleY);
   if (w > MIN_REGION_SIZE && h > MIN_REGION_SIZE) {
     window.overlayApi.sendRegion({ x, y, width: w, height: h });
   }
