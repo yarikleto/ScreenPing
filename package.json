@@ -38,6 +38,14 @@
     },
     "files": [
       "src/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "yarikleto",
+        "repo": "ScreenPing",
+        "releaseType": "release"
+      }
     ]
   },
   "keywords": [
