@@ -40,6 +40,15 @@ class Monitor {
     this.prevImage = null;
   }
 
+  emitStatus(diffPercent, triggered = false, notified = false) {
+    this.onStatus({
+      lastCheck: new Date().toLocaleTimeString(),
+      diffPercent,
+      triggered,
+      notified,
+    });
+  }
+
   async tick() {
     if (!this.running) return;
     try {
@@ -47,16 +56,14 @@ class Monitor {
       const cropped = cropRegion(screenshot, this.region);
       const { data, width, height } = toRGBA(cropped);
 
-      if (!this.prevImage) {
+      // Establish a baseline (and skip comparison) on the first frame, or
+      // whenever the captured size changes — e.g. a display resolution change.
+      const sizeChanged =
+        this.prevImage &&
+        (this.prevImage.width !== width || this.prevImage.height !== height);
+      if (!this.prevImage || sizeChanged) {
         this.prevImage = { data, width, height };
-        this.onStatus({ lastCheck: new Date().toLocaleTimeString(), diffPercent: 0, triggered: false, notified: false });
-        return;
-      }
-
-      // Handle size mismatch (e.g. resolution change)
-      if (this.prevImage.width !== width || this.prevImage.height !== height) {
-        this.prevImage = { data, width, height };
-        this.onStatus({ lastCheck: new Date().toLocaleTimeString(), diffPercent: 0, triggered: false, notified: false });
+        this.emitStatus(0);
         return;
       }
 
@@ -79,13 +86,7 @@ class Monitor {
         }
       }
 
-      this.onStatus({
-        lastCheck: new Date().toLocaleTimeString(),
-        diffPercent,
-        triggered,
-        notified,
-      });
-
+      this.emitStatus(diffPercent, triggered, notified);
       this.prevImage = { data, width, height };
     } catch (err) {
       console.error('Monitor tick error:', err.message);

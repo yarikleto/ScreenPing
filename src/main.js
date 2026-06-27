@@ -21,6 +21,15 @@ const isMac = process.platform === 'darwin';
 
 let mainWindowShown = false;
 
+// Settle the pending openOverlay() promise exactly once with the selected
+// region (or null when cancelled), then clear the resolver.
+function resolveRegion(value) {
+  if (regionResolve) {
+    regionResolve(value);
+    regionResolve = null;
+  }
+}
+
 // Reveal the main window exactly once. Called after the first content
 // measurement so the window opens already sized to its content (no resize jump).
 function showMainWindow() {
@@ -166,7 +175,7 @@ async function openOverlay() {
     });
     overlayWindow.on('closed', () => {
       overlayWindow = null;
-      if (regionResolve) { regionResolve(null); regionResolve = null; }
+      resolveRegion(null);
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.show();
         mainWindow.focus();
@@ -203,12 +212,12 @@ ipcMain.on('region-selected', (_e, region) => {
   config.set('region', region);
   const preview = buildRegionPreview(region);
   config.set('regionPreview', preview);
-  if (regionResolve) { regionResolve({ region, preview }); regionResolve = null; }
+  resolveRegion({ region, preview });
   if (overlayWindow) { overlayWindow.close(); }
 });
 
 ipcMain.on('region-cancelled', () => {
-  if (regionResolve) { regionResolve(null); regionResolve = null; }
+  resolveRegion(null);
   if (overlayWindow) { overlayWindow.close(); }
 });
 

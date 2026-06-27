@@ -23,9 +23,7 @@ module.exports = {
     };
   },
   save(cfg) {
-    for (const [key, value] of Object.entries(cfg)) {
-      store.set(key, value);
-    }
+    store.set(cfg);
   },
   get(key) {
     return store.get(key);
