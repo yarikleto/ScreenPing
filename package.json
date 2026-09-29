@@ -63,7 +63,7 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "electron": "^40.8.5",
+    "electron": "^41.10.6",
     "electron-builder": "^26.15.3",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.1.0",
