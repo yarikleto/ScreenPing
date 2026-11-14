@@ -38,6 +38,12 @@ No more babysitting a tab to catch the one moment something happens.
 3. **Compare** — each capture is diffed against the previous one, pixel by pixel
 4. **Alert** — if the change exceeds your threshold, the screenshot is sent to Telegram
 
+## Design decisions
+
+- **Pixel diff with a threshold, not file sizes.** Each capture is compared with the previous one pixel by pixel, and an alert fires only when the changed share passes your threshold, so a blinking cursor or anti-aliasing doesn't trigger it.
+- **Telegram Bot API instead of a server.** Alerts go straight from your machine to your chat, so there are no accounts, no backend and no telemetry, and the bot token never leaves your computer.
+- **Electron, built per platform.** One codebase gives screen capture, a global hotkey and notifications on macOS, Windows and Linux; Electron can't cross-compile, so each installer is built on its own platform.
+
 ## Quick start
 
 ```bash
