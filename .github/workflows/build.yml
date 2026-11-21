@@ -54,4 +54,4 @@ jobs:
             dist/*.AppImage
             dist/*.exe
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 3
